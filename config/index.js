@@ -31,16 +31,16 @@ module.exports = {
         assetsSubDirectory: 'static',
         assetsPublicPath: '/',
         proxyTable: {
-            '/mock': {
-                target: 'http://localhost:7777',
-                changeOrigin: true,
-                pathRewrite: {
-                    '^/mock': ''
-                }
-            },
+            // '/mock': {
+            //     target: 'http://localhost:7777',
+            //     changeOrigin: true,
+            //     pathRewrite: {
+            //         '^/mock': ''
+            //     }
+            // },
             '/api': {
-                // target: 'http://127.0.0.1:7007',
-                target: 'http://192.168.6.75:7007',
+                target: 'http://127.0.0.1:7007',
+                // target: 'http://192.168.6.75:7007',
                 changeOrigin: true,
                 pathRewrite: {
                     '^/api': ''

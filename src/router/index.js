@@ -137,7 +137,7 @@ router.beforeEach((to, from, next) => {
         auth = true, permission = ''
     } = to.meta
     if (auth) {
-        if (store.state.user.account === undefined) {
+        if (store.state.user.token === undefined) {
             iView.LoadingBar.finish()
             return next({
                 name: 'login',
