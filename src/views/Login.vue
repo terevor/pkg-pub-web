@@ -158,8 +158,13 @@ export default {
                 if (valid) {
                     const list = [
                         {
+                            name: 'project',
+                            title: '项目',
+                            icon: 'cube'
+                        },
+                        {
                             name: 'category',
-                            title: '版本目录',
+                            title: '安装包',
                             icon: 'network'
                         },
                         {

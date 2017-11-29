@@ -18,6 +18,7 @@
         <form ref="hiddenform" target="_blank">
             <input type="hidden" name="filename" ref="form_filename">
             <input type="hidden" name="dir" ref="form_dir">
+            <input type="hidden" name="token" v-model="$store.state.user.token">
         </form>
     </div>
 </template>
@@ -25,6 +26,7 @@
 <script>
 import { fetchCategoryList } from '@/services/category'
 export default {
+    name: 'category',
     data() {
         return {
             categoryList: [],
@@ -152,7 +154,7 @@ export default {
             const $form = this.$refs['hiddenform']
             this.$refs['form_filename'].value = file
             this.$refs['form_dir'].value = this.opendCategory
-            $form.action = '/api/download'
+            $form.action = '/api/pkg/download'
             $form.method = 'GET'
             $form.submit()
         }

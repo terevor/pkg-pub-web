@@ -53,3 +53,7 @@ body {
 }
 
 @include scrollBar;
+
+textarea.ivu-input {
+    font-size: 12px;
+}

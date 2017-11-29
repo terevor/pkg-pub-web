@@ -71,10 +71,19 @@ export const routes = [
             //     component: _import('profile/Profile')
             // }
             {
+                path: 'project',
+                name: 'project',
+                meta: {
+                    title: '项目',
+                    icon: 'cube'
+                },
+                component: _import('project/Project')
+            },
+            {
                 path: 'category',
                 name: 'category',
                 meta: {
-                    title: '版本目录',
+                    title: '安装包',
                     icon: 'network'
                 },
                 component: _import('category/Category')

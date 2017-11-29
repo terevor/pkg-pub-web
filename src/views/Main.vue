@@ -50,11 +50,11 @@
         </div>
         <div class="single-page-con" :style="{ left: layout.sidebar.toggle ? '60px' : '200px' }">
             <div class="single-page">
-                <keep-alive :include="cachePage">
-                    <transition name="fade" mode="out-in">
+                <transition name="fade" mode="out-in">
+                    <keep-alive :include="cachePage">
                         <router-view></router-view>
-                    </transition>
-                </keep-alive>
+                    </keep-alive>
+                </transition>
             </div>
         </div>
     </div>

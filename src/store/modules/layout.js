@@ -18,7 +18,7 @@ export default {
     state: {
         sidebar: {
             toggle: !!+localStorage.getItem(key.toggle), // 侧边栏收起或展开
-            menuTheme: localStorage.getItem(key.theme) || 'light', // 主题 dark or light
+            menuTheme: localStorage.getItem(key.theme) || 'dark', // 主题 dark or light
             menus: JSON.parse(localStorage.getItem(key.menus)) || [],
             opened: JSON.parse(sessionStorage.getItem(key.opened)) || []
         },
