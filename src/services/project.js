@@ -44,3 +44,16 @@ export const saveMod = data =>
         url: API.mod,
         data
     })
+
+export const updateMod = data =>
+    httpClient({
+        method: 'put',
+        url: API.mod,
+        data
+    })
+
+export const deleteMod = id =>
+    httpClient({
+        method: 'delete',
+        url: `${API.mod}/${id}`
+    })

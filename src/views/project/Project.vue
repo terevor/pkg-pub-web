@@ -8,7 +8,7 @@
             <div class="wrapper" v-for="project in projectList" :key="project._id" style="margin: 0px 20px;">
                 <Button @click="openProject(project._id)" size="large" long type="text">
                     <transition name="current-project">
-                        <Icon v-show="opendProject === project._id" type="checkmark"></Icon>
+                        <Icon v-show="openedProject === project._id" type="checkmark"></Icon>
                     </transition>
                     <span class="text-name">{{ project.name }}</span>
                 </Button>
@@ -27,7 +27,7 @@
                                 <p class="time">{{formatDate(version.modifiedTime)}}</p>
                                 <p class="content">
                                     <Button @click="openVersion(version._id)" type="text">
-                                        <Icon v-if="opendVersion === version._id" type="checkmark"></Icon>
+                                        <Icon v-if="openedVersion === version._id" type="checkmark"></Icon>
                                         <span class="text-name">{{version.name}}</span>
                                     </Button>
                                 </p>
@@ -40,7 +40,7 @@
         <transition name="slide-fade" mode="out-in">
             <div class="mod-list" v-show="!editing">
                 <div class="wrapper" style="margin: 5px 20px;">
-                    <Button type="primary" shape="circle" icon="plus" @click="edit.mod = true"></Button>
+                    <Button type="primary" shape="circle" icon="plus" @click="addMod"></Button>
                     <span class="panel-title">模块</span>
                 </div>
                 <div class="mod-list-content">
@@ -99,6 +99,19 @@
                 </Form>
             </div>
         </transition>
+        <Modal v-model="edit.delete" width="360">
+            <p slot="header" style="color:#f60; text-align:center;">
+                <Icon type="information-circled"></Icon>
+                <span>操作警告</span>
+            </p>
+            <div style="text-align:center">
+                <p>执行删除操作后，该条数据将不可恢复</p>
+                <p>确认继续吗?</p>
+            </div>
+            <div slot="footer">
+                <Button type="error" size="large" long :loading="loading" @click="removeMod">删除</Button>
+            </div>
+        </Modal>
         <form ref="hiddenform" target="_blank">
             <input type="hidden" name="filename" ref="form_filename">
             <input type="hidden" name="dir" ref="form_dir">
@@ -114,7 +127,9 @@ import {
     fetchModList,
     saveProject,
     saveVersion,
-    saveMod
+    saveMod,
+    updateMod,
+    deleteMod
 } from '@/services/project'
 import modDetail from './ModDetail'
 import { fetchCategoryTree } from '@/services/category'
@@ -132,8 +147,9 @@ export default {
             versionList: [],
             modList: [],
             fileList: [],
-            opendProject: '',
-            opendVersion: '',
+            openedProject: '',
+            openedVersion: '',
+            openedMod: '',
             columns: [
                 {
                     type: 'expand',
@@ -173,6 +189,49 @@ export default {
                 },
                 {
                     title: ' ',
+                    key: '_id',
+                    align: 'center',
+                    render: (h, params) => {
+                        if (params.row.creator !== this.user.name) {
+                            return ''
+                        }
+                        return h(
+                            'ButtonGroup',
+                            {
+                                props: {
+                                    size: 'small'
+                                }
+                            },
+                            [
+                                h('Button', {
+                                    props: {
+                                        type: 'dashed',
+                                        icon: 'gear-b'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.editMod(params.row)
+                                        }
+                                    }
+                                }),
+                                h('Button', {
+                                    props: {
+                                        type: 'dashed',
+                                        icon: 'trash-b'
+                                    },
+                                    on: {
+                                        click: () => {
+                                            this.openedMod = params.row._id
+                                            this.edit.delete = true
+                                        }
+                                    }
+                                })
+                            ]
+                        )
+                    }
+                },
+                {
+                    title: ' ',
                     key: 'modifiedTime',
                     align: 'center',
                     width: 180,
@@ -200,7 +259,8 @@ export default {
             edit: {
                 project: false,
                 version: false,
-                mod: false
+                mod: false,
+                delete: false
             },
             projectForm: {
                 name: '',
@@ -274,7 +334,7 @@ export default {
         },
         openProject(id) {
             if (id) {
-                this.opendProject = id
+                this.openedProject = id
                 this.versionList = []
                 this.modList = []
                 this.loadVersionList(id)
@@ -282,7 +342,7 @@ export default {
         },
         openVersion(id) {
             if (id) {
-                this.opendVersion = id
+                this.openedVersion = id
                 this.modList = []
                 this.loadModList(id)
             }
@@ -354,14 +414,9 @@ export default {
                     saveProject(p)
                         .then(({ data }) => {
                             if (data) {
-                                this.$Message.success({
-                                    content: '添加成功',
-                                    onClose: () => {
-                                        this.$refs['prjForm'].resetFields()
-                                        this.edit.project = false
-                                        this.loadProjectList()
-                                    }
-                                })
+                                this.$Message.success('添加成功')
+                                this.$refs['prjForm'].resetFields()
+                                this.edit.project = false
                             }
                         })
                         .catch(err => {
@@ -370,6 +425,9 @@ export default {
                         })
                         .finally(() => {
                             this.loading = false
+                            if (!this.edit.project) {
+                                this.loadProjectList()
+                            }
                         })
                 }
             })
@@ -380,20 +438,15 @@ export default {
                     const p = {
                         name: this.versionForm.name,
                         desc: this.versionForm.desc,
-                        projectId: this.opendProject
+                        projectId: this.openedProject
                     }
                     this.loading = true
                     saveVersion(p)
                         .then(({ data }) => {
                             if (data) {
-                                this.$Message.success({
-                                    content: '添加成功',
-                                    onClose: () => {
-                                        this.$refs['verForm'].resetFields()
-                                        this.edit.version = false
-                                        this.loadVersionList(data.projectId)
-                                    }
-                                })
+                                this.$Message.success('添加成功')
+                                this.$refs['verForm'].resetFields()
+                                this.edit.version = false
                             }
                         })
                         .catch(err => {
@@ -402,6 +455,9 @@ export default {
                         })
                         .finally(() => {
                             this.loading = false
+                            if (!this.edit.version) {
+                                this.loadVersionList(this.openedProject)
+                            }
                         })
                 }
             })
@@ -410,34 +466,65 @@ export default {
             this.$refs['modForm'].validate(valid => {
                 if (valid) {
                     const p = {
-                        name: this.modForm.name,
-                        desc: this.modForm.desc,
-                        url: this.modForm.url,
-                        versionId: this.opendVersion
+                        ...this.modForm
                     }
                     this.loading = true
-                    saveMod(p)
+                    const act = p._id ? updateMod : saveMod
+                    act(p)
                         .then(({ data }) => {
                             if (data) {
-                                this.$Message.success({
-                                    content: '添加成功',
-                                    onClose: () => {
-                                        this.$refs['modForm'].resetFields()
-                                        this.edit.mod = false
-                                        this.loadModList(data.versionId)
-                                    }
-                                })
+                                this.$Message.success('操作成功')
+                                this.$refs['modForm'].resetFields()
+                                this.edit.mod = false
                             }
                         })
                         .catch(err => {
                             console.dir(err)
-                            this.$Message.error(err.message || '添加失败')
+                            this.$Message.error(err.message || '操作失败')
                         })
                         .finally(() => {
                             this.loading = false
+                            if (!this.edit.mod) {
+                                this.loadModList(this.openedVersion)
+                            }
                         })
                 }
             })
+        },
+        addMod() {
+            this.edit.mod = true
+            this.modForm._id = undefined
+            this.modForm.name = ''
+            this.modForm.desc = ''
+            this.modForm.url = []
+            this.modForm.versionId = this.openedVersion
+        },
+        editMod(mod) {
+            this.edit.mod = true
+            this.modForm._id = mod._id
+            this.modForm.name = mod.name
+            this.modForm.desc = mod.desc
+            this.modForm.url = mod.url
+            this.modForm.versionId = undefined
+        },
+        removeMod() {
+            this.loading = true
+            deleteMod(this.openedMod)
+                .then(({ data }) => {
+                    this.$Message.success('删除成功')
+                    this.edit.delete = false
+                    this.openedMod = null
+                })
+                .catch(err => {
+                    console.dir(err)
+                    this.$Message.error(err.message || '删除失败')
+                })
+                .finally(() => {
+                    this.loading = false
+                    if (!this.edit.delete) {
+                        this.loadModList(this.openedVersion)
+                    }
+                })
         },
         download(dir, file) {
             const $form = this.$refs['hiddenform']
@@ -548,19 +635,5 @@ export default {
 .current-project-leave {
     opacity: 1;
     width: 12px;
-}
-
-.slide-fade-enter-active {
-    transition: all 0.3s ease;
-}
-
-.slide-fade-leave-active {
-    transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
-}
-
-.slide-fade-enter,
-.slide-fade-leave-to {
-    transform: translateX(10px);
-    opacity: 0;
 }
 </style>
