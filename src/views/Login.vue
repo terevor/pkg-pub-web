@@ -173,12 +173,12 @@ export default {
                             icon: 'settings',
                             children: [
                                 {
-                                    name: 'settings_user',
+                                    name: 'user',
                                     title: '用户',
                                     icon: 'person'
                                 },
                                 {
-                                    name: 'settings_group',
+                                    name: 'group',
                                     title: '项目组',
                                     icon: 'gear-a'
                                 }

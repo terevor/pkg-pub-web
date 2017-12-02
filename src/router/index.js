@@ -90,7 +90,7 @@ export const routes = [
             },
             {
                 path: 'user',
-                name: 'settings_user',
+                name: 'user',
                 meta: {
                     title: '用户',
                     icon: 'person',
@@ -101,7 +101,7 @@ export const routes = [
             },
             {
                 path: 'group',
-                name: 'settings_group',
+                name: 'group',
                 meta: {
                     title: '项目组',
                     icon: 'gear-a',
