@@ -1,8 +1,10 @@
 <template>
     <div class="project-main">
-        <div class="project-list">
+        <div class="panel-left">
             <div class="wrapper" style="margin: 0px 20px;">
-                <Button type="primary" shape="circle" icon="plus" @click="edit.project = true"></Button>
+                <Tooltip content="添加一个新项目" placement="bottom-start">
+                    <Button type="primary" shape="circle" icon="plus" @click="edit.project = true"></Button>
+                </Tooltip>
                 <span class="panel-title">项目</span>
             </div>
             <div class="wrapper" v-for="project in projectList" :key="project._id" style="margin: 0px 20px;">
@@ -14,42 +16,48 @@
                 </Button>
             </div>
         </div>
+
         <transition name="slide-fade" mode="out-in">
-            <div class="pannel version-list" v-show="!editing">
+            <div class="panel-center version-list" v-show="!edit.project">
                 <div class="wrapper">
-                    <Button type="primary" shape="circle" icon="plus" @click="edit.version = true"></Button>
+                    <Tooltip content="添加一个新版本" placement="bottom-start">
+                        <Button type="primary" shape="circle" icon="plus" @click="addVersion"></Button>
+                    </Tooltip>
                     <span class="panel-title">版本</span>
                 </div>
-                <div class="wrapper">
-                    <Timeline>
-                        <TimelineItem v-for="version in versionList" :key="version._id">
-                            <span>
-                                <p class="time">{{formatDate(version.modifiedTime)}}</p>
-                                <p class="content">
-                                    <Button @click="openVersion(version._id)" type="text">
-                                        <Icon v-if="openedVersion === version._id" type="checkmark"></Icon>
-                                        <span class="text-name">{{version.name}}</span>
-                                    </Button>
-                                </p>
-                            </span>
-                        </TimelineItem>
-                    </Timeline>
+                <div class="wrapper timeline-container">
+                    <div class="timeline-col">
+                        <Timeline>
+                            <TimelineItem v-for="version in versionList" :key="version._id">
+                                <span>
+                                    <p class="time">{{ new Date(version.modifiedTime) | formatDateStr('yyyy/MM/dd hh:mm') }}</p>
+                                    <p class="content">
+                                        <Button @click="openVersion(version)" type="text">
+                                            <Icon v-if="openedVersion && openedVersion._id === version._id" type="checkmark"></Icon>
+                                            <span class="text-name">{{version.name}}</span>
+                                        </Button>
+                                    </p>
+                                </span>
+                            </TimelineItem>
+                        </Timeline>
+                    </div>
+                    <div class="detail-col" v-show="versionList.length > 0">
+                        <div class="detail-title">
+                            <span class="detail-title-text">{{openedVersion.name}} 版本说明</span>
+                            <Tooltip content="打开模块列表" placement="bottom-start">
+                                <Button type="primary" shape="circle" size="small" icon="arrow-return-right" @click="showModList"></Button>
+                            </Tooltip>
+                            <Tooltip content="编辑版本信息" placement="bottom-start">
+                                <Button type="primary" shape="circle" size="small" icon="edit" @click="editVersion(openedVersion)"></Button>
+                            </Tooltip>
+                        </div>
+                        <Input v-model="openedVersion.desc" type="textarea" :autosize="{ minRows: 3 }" readonly></Input>
+                    </div>
                 </div>
             </div>
         </transition>
         <transition name="slide-fade" mode="out-in">
-            <div class="mod-list" v-show="!editing">
-                <div class="wrapper" style="margin: 5px 20px;">
-                    <Button type="primary" shape="circle" icon="plus" @click="addMod"></Button>
-                    <span class="panel-title">模块</span>
-                </div>
-                <div class="mod-list-content">
-                    <Table ref="modList" :columns="columns" :data="modList" :loading="loading"></Table>
-                </div>
-            </div>
-        </transition>
-        <transition name="slide-fade" mode="out-in">
-            <div class="pannel form" v-show="edit.project">
+            <div class="panel-center form" v-show="edit.project">
                 <Form ref="prjForm" :model="projectForm" :rules="rules" :label-width="80">
                     <FormItem label="项目名称" prop="name">
                         <Input v-model="projectForm.name" placeholder="请输入项目名称"></Input>
@@ -64,8 +72,25 @@
                 </Form>
             </div>
         </transition>
+
         <transition name="slide-fade" mode="out-in">
-            <div class="pannel form" v-show="edit.version">
+            <div class="panel-right" v-show="edit.modlist">
+                <div class="wrapper" style="margin: 5px 20px;">
+                    <Tooltip content="返回版本说明" placement="bottom-start">
+                        <Button type="default" shape="circle" icon="arrow-return-left" @click="edit.modlist = false" style="margin-right: 10px;"></Button>
+                    </Tooltip>
+                    <Tooltip content="添加一个新模块" placement="bottom-start">
+                        <Button type="primary" shape="circle" icon="plus" @click="addMod"></Button>
+                    </Tooltip>
+                    <span class="panel-title">模块</span>
+                </div>
+                <div class="panel-right-content">
+                    <Table ref="modList" :columns="columns" :data="modList" :loading="loading"></Table>
+                </div>
+            </div>
+        </transition>
+        <transition name="slide-fade" mode="out-in">
+            <div class="panel-right form" v-show="edit.version">
                 <Form ref="verForm" :model="versionForm" :rules="rules" :label-width="80">
                     <FormItem label="版本号" prop="name">
                         <Input v-model="versionForm.name" placeholder="请输入版本号"></Input>
@@ -81,7 +106,7 @@
             </div>
         </transition>
         <transition name="slide-fade" mode="out-in">
-            <div class="pannel form" v-show="edit.mod">
+            <div class="panel-right form" v-show="edit.mod">
                 <Form ref="modForm" :model="modForm" :rules="rules" :label-width="80">
                     <FormItem label="模块名称" prop="name">
                         <Input v-model="modForm.name" placeholder="请输入模块名称"></Input>
@@ -99,6 +124,7 @@
                 </Form>
             </div>
         </transition>
+
         <Modal v-model="edit.delete" width="360">
             <p slot="header" style="color:#f60; text-align:center;">
                 <Icon type="information-circled"></Icon>
@@ -127,16 +153,14 @@ import {
     fetchModList,
     saveProject,
     saveVersion,
+    updateVersion,
     saveMod,
     updateMod,
     deleteMod
 } from '@/services/project'
 import modDetail from './ModDetail'
 import { fetchCategoryTree } from '@/services/category'
-
-function lpad(s) {
-    return `00${s}`.slice(s.toString().length)
-}
+import { formatDateStr } from '@/filters'
 
 export default {
     name: 'project',
@@ -148,7 +172,10 @@ export default {
             modList: [],
             fileList: [],
             openedProject: '',
-            openedVersion: '',
+            openedVersion: {
+                name: '',
+                desc: ''
+            },
             openedMod: '',
             columns: [
                 {
@@ -249,7 +276,10 @@ export default {
                             h(
                                 'span',
                                 {},
-                                this.formatDate(params.row.modifiedTime)
+                                formatDateStr(
+                                    new Date(params.row.modifiedTime),
+                                    'yyyy/MM/dd hh:mm'
+                                )
                             )
                         ])
                     }
@@ -259,6 +289,7 @@ export default {
             edit: {
                 project: false,
                 version: false,
+                modlist: false,
                 mod: false,
                 delete: false
             },
@@ -291,9 +322,6 @@ export default {
         }
     },
     computed: {
-        editing() {
-            return this.edit.project || this.edit.version || this.edit.mod
-        },
         user() {
             return this.$store.state.user
         }
@@ -303,25 +331,6 @@ export default {
         this.loadFileList()
     },
     methods: {
-        formatDate(time) {
-            let date = new Date(time)
-            let year = date.getFullYear()
-            let month = date.getMonth() + 1
-            let day = date.getDate()
-            let hour = date.getHours()
-            let minute = date.getMinutes()
-            return (
-                year +
-                '/' +
-                lpad(month) +
-                '/' +
-                lpad(day) +
-                '  ' +
-                lpad(hour) +
-                ':' +
-                lpad(minute)
-            )
-        },
         loadFileList() {
             fetchCategoryTree()
                 .then(({ data }) => {
@@ -338,14 +347,31 @@ export default {
                 this.versionList = []
                 this.modList = []
                 this.loadVersionList(id)
+                this.edit = {
+                    project: false,
+                    version: false,
+                    modlist: false,
+                    mod: false,
+                    delete: false
+                }
             }
         },
-        openVersion(id) {
-            if (id) {
-                this.openedVersion = id
-                this.modList = []
-                this.loadModList(id)
+        openVersion(version) {
+            if (version) {
+                this.openedVersion = version
+                this.edit = {
+                    project: false,
+                    version: false,
+                    modlist: false,
+                    mod: false,
+                    delete: false
+                }
             }
+        },
+        showModList() {
+            this.edit.modlist = true
+            this.modList = []
+            this.loadModList(this.openedVersion._id)
         },
         loadProjectList() {
             this.loading = true
@@ -375,7 +401,7 @@ export default {
                     this.versionList = data
                     this.$nextTick(() => {
                         if (this.versionList.length > 0) {
-                            this.openVersion(this.versionList[0]._id)
+                            this.openVersion(this.versionList[0])
                         }
                     })
                 })
@@ -436,22 +462,21 @@ export default {
             this.$refs['verForm'].validate(valid => {
                 if (valid) {
                     const p = {
-                        name: this.versionForm.name,
-                        desc: this.versionForm.desc,
-                        projectId: this.openedProject
+                        ...this.versionForm
                     }
                     this.loading = true
-                    saveVersion(p)
+                    const act = p._id ? updateVersion : saveVersion
+                    act(p)
                         .then(({ data }) => {
                             if (data) {
-                                this.$Message.success('添加成功')
+                                this.$Message.success('操作成功')
                                 this.$refs['verForm'].resetFields()
                                 this.edit.version = false
                             }
                         })
                         .catch(err => {
                             console.dir(err)
-                            this.$Message.error(err.message || '添加失败')
+                            this.$Message.error(err.message || '操作失败')
                         })
                         .finally(() => {
                             this.loading = false
@@ -461,6 +486,20 @@ export default {
                         })
                 }
             })
+        },
+        addVersion() {
+            this.edit.version = true
+            this.versionForm._id = undefined
+            this.versionForm.name = ''
+            this.versionForm.desc = ''
+            this.versionForm.projectId = this.openedProject
+        },
+        editVersion(version) {
+            this.edit.version = true
+            this.versionForm._id = version._id
+            this.versionForm.name = version.name
+            this.versionForm.desc = version.desc
+            this.versionForm.projectId = undefined
         },
         saveMod() {
             this.$refs['modForm'].validate(valid => {
@@ -485,7 +524,7 @@ export default {
                         .finally(() => {
                             this.loading = false
                             if (!this.edit.mod) {
-                                this.loadModList(this.openedVersion)
+                                this.loadModList(this.openedVersion._id)
                             }
                         })
                 }
@@ -497,7 +536,7 @@ export default {
             this.modForm.name = ''
             this.modForm.desc = ''
             this.modForm.url = []
-            this.modForm.versionId = this.openedVersion
+            this.modForm.versionId = this.openedVersion._id
         },
         editMod(mod) {
             this.edit.mod = true
@@ -522,7 +561,7 @@ export default {
                 .finally(() => {
                     this.loading = false
                     if (!this.edit.delete) {
-                        this.loadModList(this.openedVersion)
+                        this.loadModList(this.openedVersion._id)
                     }
                 })
         },
@@ -546,11 +585,45 @@ export default {
     right: 0px;
     bottom: 0px;
     .wrapper {
+        position: relative;
         padding: 10px;
         margin: 10px 20px;
         border-bottom: 1px dashed #d2d3d2;
         &:last-child {
             border: none;
+        }
+        &.timeline-container {
+            position: absolute;
+            top: 54px;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+        .timeline-col {
+            position: absolute;
+            top: 10px;
+            bottom: 0;
+            left: 10px;
+            width: 180px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-right: 1px dashed #d2d3d2;
+        }
+        .detail-col {
+            margin-left: 190px;
+            .detail-title {
+                padding: 10px;
+                border-bottom: 1px dashed #d2d3d2;
+                margin-bottom: 10px;
+                &-text {
+                    font-size: 14px;
+                    vertical-align: middle;
+                }
+                button {
+                    // float: right;
+                    margin-left: 10px;
+                }
+            }
         }
     }
     .panel-title {
@@ -561,7 +634,7 @@ export default {
     .text-name {
         margin-left: 10px;
     }
-    .project-list {
+    .panel-left {
         position: absolute;
         left: 0;
         top: 10px;
@@ -590,7 +663,21 @@ export default {
             }
         }
     }
-    .mod-list {
+    .form {
+        padding: 30px;
+    }
+    .panel-center {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        bottom: 10px;
+        left: 200px;
+        background: white;
+        border-radius: 3px;
+        box-shadow: 2px 2px 10px 2px rgba(0, 0, 0, 0.1);
+        overflow: auto;
+    }
+    .panel-right {
         position: absolute;
         top: 15px;
         right: 15px;
@@ -604,20 +691,6 @@ export default {
         &-content {
             width: 100%;
             padding: 10px;
-        }
-    }
-    .pannel {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        bottom: 10px;
-        left: 200px;
-        background: white;
-        border-radius: 3px;
-        box-shadow: 2px 2px 10px 2px rgba(0, 0, 0, 0.1);
-        overflow: auto;
-        &.form {
-            padding: 30px;
         }
     }
 }

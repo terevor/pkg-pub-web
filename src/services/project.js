@@ -38,6 +38,13 @@ export const saveVersion = data =>
         data
     })
 
+export const updateVersion = data =>
+    httpClient({
+        method: 'put',
+        url: API.version,
+        data
+    })
+
 export const saveMod = data =>
     httpClient({
         method: 'post',

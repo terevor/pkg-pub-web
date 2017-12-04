@@ -65,7 +65,7 @@ export default {
                                 {},
                                 formatDateStr(
                                     new Date(params.row.createTime),
-                                    'yyyy-MM-dd hh:mm:ss'
+                                    'yyyy/MM/dd hh:mm'
                                 )
                             )
                         ])

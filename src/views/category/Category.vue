@@ -25,6 +25,7 @@
 
 <script>
 import { fetchCategoryList } from '@/services/category'
+import { formatDateStr } from '@/filters'
 export default {
     name: 'category',
     data() {
@@ -74,7 +75,7 @@ export default {
                                     margin: '0 5px'
                                 }
                             }),
-                            h('span', {}, this.formatDate(new Date(params.row.time)))
+                            h('span', {}, formatDateStr(new Date(params.row.time), 'yyyy/MM/dd hh:mm'))
                         ])
                     }
                 }
@@ -86,28 +87,6 @@ export default {
         this.loadCategoryList()
     },
     methods: {
-        formatDate(time) {
-            let date = new Date(time)
-            let year = date.getFullYear()
-            let month = date.getMonth() + 1
-            let day = date.getDate()
-            let hour = date.getHours()
-            let minute = date.getMinutes()
-            let second = date.getSeconds()
-            return (
-                year +
-                '/' +
-                month +
-                '/' +
-                day +
-                '  ' +
-                hour +
-                ':' +
-                minute +
-                ':' +
-                second
-            )
-        },
         openOne(dir) {
             if (dir) {
                 this.opendCategory = dir
