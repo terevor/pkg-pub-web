@@ -3,7 +3,7 @@
         <div class="panel-left">
             <div class="wrapper" style="margin: 0px 20px;">
                 <Tooltip content="添加一个新项目" placement="bottom-start">
-                    <Button type="primary" shape="circle" icon="plus" @click="edit.project = true"></Button>
+                    <Button type="primary" shape="circle" icon="plus" @click="addProject"></Button>
                 </Tooltip>
                 <span class="panel-title">项目</span>
             </div>
@@ -73,7 +73,7 @@
             </div>
         </transition>
 
-        <transition name="slide-fade" mode="out-in">
+        <transition name="slide-up-fade" mode="out-in">
             <div class="panel-right" v-show="edit.modlist">
                 <div class="wrapper" style="margin: 5px 20px;">
                     <Tooltip content="返回版本说明" placement="bottom-start">
@@ -89,23 +89,7 @@
                 </div>
             </div>
         </transition>
-        <transition name="slide-fade" mode="out-in">
-            <div class="panel-right form" v-show="edit.version">
-                <Form ref="verForm" :model="versionForm" :rules="rules" :label-width="80">
-                    <FormItem label="版本号" prop="name">
-                        <Input v-model="versionForm.name" placeholder="请输入版本号"></Input>
-                    </FormItem>
-                    <FormItem label="版本说明" prop="desc">
-                        <Input v-model="versionForm.desc" type="textarea" :autosize="{ minRows: 3, maxRows: 15 }" placeholder="请输入版本说明"></Input>
-                    </FormItem>
-                    <FormItem>
-                        <Button type="primary" @click="saveVersion" :loading="loading">提交</Button>
-                        <Button type="ghost" style="margin-left: 8px" @click="edit.version = false">取消</Button>
-                    </FormItem>
-                </Form>
-            </div>
-        </transition>
-        <transition name="slide-fade" mode="out-in">
+        <transition name="slide-up-fade" mode="out-in">
             <div class="panel-right form" v-show="edit.mod">
                 <Form ref="modForm" :model="modForm" :rules="rules" :label-width="80">
                     <FormItem label="模块名称" prop="name">
@@ -120,6 +104,22 @@
                     <FormItem>
                         <Button type="primary" @click="saveMod" :loading="loading">提交</Button>
                         <Button type="ghost" style="margin-left: 8px" @click="edit.mod = false">取消</Button>
+                    </FormItem>
+                </Form>
+            </div>
+        </transition>
+        <transition name="slide-up-fade" mode="out-in">
+            <div class="panel-right form" v-show="edit.version">
+                <Form ref="verForm" :model="versionForm" :rules="rules" :label-width="80">
+                    <FormItem label="版本号" prop="name">
+                        <Input v-model="versionForm.name" placeholder="请输入版本号"></Input>
+                    </FormItem>
+                    <FormItem label="版本说明" prop="desc">
+                        <Input v-model="versionForm.desc" type="textarea" :autosize="{ minRows: 3, maxRows: 15 }" placeholder="请输入版本说明"></Input>
+                    </FormItem>
+                    <FormItem>
+                        <Button type="primary" @click="saveVersion" :loading="loading">提交</Button>
+                        <Button type="ghost" style="margin-left: 8px" @click="edit.version = false">取消</Button>
                     </FormItem>
                 </Form>
             </div>
@@ -458,6 +458,15 @@ export default {
                 }
             })
         },
+        addProject() {
+            this.edit = {
+                project: true,
+                version: false,
+                modlist: false,
+                mod: false,
+                delete: false
+            }
+        },
         saveVersion() {
             this.$refs['verForm'].validate(valid => {
                 if (valid) {
@@ -584,6 +593,7 @@ export default {
     top: 0px;
     right: 0px;
     bottom: 0px;
+    overflow: hidden;
     .wrapper {
         position: relative;
         padding: 10px;
