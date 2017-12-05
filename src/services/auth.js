@@ -1,9 +1,9 @@
 import { httpClient } from '@/plugins/axios'
 
 const API = {
-    login: '/api/auth/login',
-    register: '/api/auth/register',
-    user: '/api/user/search'
+    login: '/auth/login',
+    register: '/auth/register',
+    user: '/user/search'
 }
 
 export const submitLogin = data =>

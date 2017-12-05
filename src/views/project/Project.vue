@@ -331,15 +331,14 @@ export default {
         this.loadFileList()
     },
     methods: {
-        loadFileList() {
-            fetchCategoryTree()
-                .then(({ data }) => {
-                    this.fileList = data
-                })
-                .catch(err => {
-                    console.dir(err)
-                    this.$Message.error(err.message || '查询安装包文件列表失败，请稍后再试')
-                })
+        async loadFileList() {
+            try {
+                const { data } = await fetchCategoryTree()
+                this.fileList = data
+            } catch (err) {
+                console.dir(err)
+                this.$Message.error(err.message || '查询安装包文件列表失败，请稍后再试')
+            }
         },
         openProject(id) {
             if (id) {
@@ -373,88 +372,76 @@ export default {
             this.modList = []
             this.loadModList(this.openedVersion._id)
         },
-        loadProjectList() {
+        async loadProjectList() {
             this.loading = true
-            fetchProjectList()
-                .then(({ data }) => {
-                    this.projectList = data
-                    this.$nextTick(() => {
-                        if (this.projectList.length > 0) {
-                            this.openProject(this.projectList[0]._id)
-                        }
-                    })
+            try {
+                const { data } = await fetchProjectList()
+                this.projectList = data
+                this.$nextTick(() => {
+                    if (this.projectList.length > 0) {
+                        this.openProject(this.projectList[0]._id)
+                    }
                 })
-                .catch(err => {
-                    console.dir(err)
-                    this.$Message.error(err.message || '查询失败，请稍后再试')
-                })
-                .finally(() => {
-                    this.loading = false
-                })
+            } catch (err) {
+                console.dir(err)
+                this.$Message.error(err.message || '查询失败，请稍后再试')
+            }
+            this.loading = false
         },
-        loadVersionList(id) {
+        async loadVersionList(id) {
             this.loading = true
-            fetchVersionList({
-                projectId: id
-            })
-                .then(({ data }) => {
-                    this.versionList = data
-                    this.$nextTick(() => {
-                        if (this.versionList.length > 0) {
-                            this.openVersion(this.versionList[0])
-                        }
-                    })
+            try {
+                const { data } = await fetchVersionList({
+                    projectId: id
                 })
-                .catch(err => {
-                    console.dir(err)
-                    this.$Message.error(err.message || '查询失败，请稍后再试')
+                this.versionList = data
+                this.$nextTick(() => {
+                    if (this.versionList.length > 0) {
+                        this.openVersion(this.versionList[0])
+                    }
                 })
-                .finally(() => {
-                    this.loading = false
-                })
+            } catch (err) {
+                console.dir(err)
+                this.$Message.error(err.message || '查询失败，请稍后再试')
+            }
+            this.loading = false
         },
-        loadModList(id) {
+        async loadModList(id) {
             this.loading = true
-            fetchModList({
-                versionId: id
-            })
-                .then(({ data }) => {
-                    this.modList = data
+            try {
+                const { data } = await fetchModList({
+                    versionId: id
                 })
-                .catch(err => {
-                    console.dir(err)
-                    this.$Message.error(err.message || '查询失败，请稍后再试')
-                })
-                .finally(() => {
-                    this.loading = false
-                })
+                this.modList = data
+            } catch (err) {
+                console.dir(err)
+                this.$Message.error(err.message || '查询失败，请稍后再试')
+            }
+            this.loading = false
         },
         saveProject() {
-            this.$refs['prjForm'].validate(valid => {
+            this.$refs['prjForm'].validate(async valid => {
                 if (valid) {
                     const p = {
                         name: this.projectForm.name,
                         desc: this.projectForm.desc
                     }
                     this.loading = true
-                    saveProject(p)
-                        .then(({ data }) => {
-                            if (data) {
-                                this.$Message.success('添加成功')
-                                this.$refs['prjForm'].resetFields()
-                                this.edit.project = false
-                            }
-                        })
-                        .catch(err => {
-                            console.dir(err)
-                            this.$Message.error(err.message || '添加失败')
-                        })
-                        .finally(() => {
-                            this.loading = false
-                            if (!this.edit.project) {
-                                this.loadProjectList()
-                            }
-                        })
+                    try {
+                        const { data } = await saveProject(p)
+                        if (data) {
+                            this.$Message.success('添加成功')
+                            this.$refs['prjForm'].resetFields()
+                            this.edit.project = false
+                        }
+                    } catch (err) {
+                        console.dir(err)
+                        this.$Message.error(err.message || '添加失败')
+                    }
+                    this.loading = false
+                    if (!this.edit.project) {
+                        this.loadProjectList()
+                    }
                 }
             })
         },
@@ -468,31 +455,28 @@ export default {
             }
         },
         saveVersion() {
-            this.$refs['verForm'].validate(valid => {
+            this.$refs['verForm'].validate(async valid => {
                 if (valid) {
                     const p = {
                         ...this.versionForm
                     }
                     this.loading = true
                     const act = p._id ? updateVersion : saveVersion
-                    act(p)
-                        .then(({ data }) => {
-                            if (data) {
-                                this.$Message.success('操作成功')
-                                this.$refs['verForm'].resetFields()
-                                this.edit.version = false
-                            }
-                        })
-                        .catch(err => {
-                            console.dir(err)
-                            this.$Message.error(err.message || '操作失败')
-                        })
-                        .finally(() => {
-                            this.loading = false
-                            if (!this.edit.version) {
-                                this.loadVersionList(this.openedProject)
-                            }
-                        })
+                    try {
+                        const { data } = await act(p)
+                        if (data) {
+                            this.$Message.success('操作成功')
+                            this.$refs['verForm'].resetFields()
+                            this.edit.version = false
+                        }
+                    } catch (err) {
+                        console.dir(err)
+                        this.$Message.error(err.message || '操作失败')
+                    }
+                    this.loading = false
+                    if (!this.edit.version) {
+                        this.loadVersionList(this.openedProject)
+                    }
                 }
             })
         },
@@ -511,31 +495,28 @@ export default {
             this.versionForm.projectId = undefined
         },
         saveMod() {
-            this.$refs['modForm'].validate(valid => {
+            this.$refs['modForm'].validate(async valid => {
                 if (valid) {
                     const p = {
                         ...this.modForm
                     }
                     this.loading = true
                     const act = p._id ? updateMod : saveMod
-                    act(p)
-                        .then(({ data }) => {
-                            if (data) {
-                                this.$Message.success('操作成功')
-                                this.$refs['modForm'].resetFields()
-                                this.edit.mod = false
-                            }
-                        })
-                        .catch(err => {
-                            console.dir(err)
-                            this.$Message.error(err.message || '操作失败')
-                        })
-                        .finally(() => {
-                            this.loading = false
-                            if (!this.edit.mod) {
-                                this.loadModList(this.openedVersion._id)
-                            }
-                        })
+                    try {
+                        const { data } = await act(p)
+                        if (data) {
+                            this.$Message.success('操作成功')
+                            this.$refs['modForm'].resetFields()
+                            this.edit.mod = false
+                        }
+                    } catch (err) {
+                        console.dir(err)
+                        this.$Message.error(err.message || '操作失败')
+                    }
+                    this.loading = false
+                    if (!this.edit.mod) {
+                        this.loadModList(this.openedVersion._id)
+                    }
                 }
             })
         },
@@ -555,24 +536,21 @@ export default {
             this.modForm.url = mod.url
             this.modForm.versionId = undefined
         },
-        removeMod() {
+        async removeMod() {
             this.loading = true
-            deleteMod(this.openedMod)
-                .then(({ data }) => {
-                    this.$Message.success('删除成功')
-                    this.edit.delete = false
-                    this.openedMod = null
-                })
-                .catch(err => {
-                    console.dir(err)
-                    this.$Message.error(err.message || '删除失败')
-                })
-                .finally(() => {
-                    this.loading = false
-                    if (!this.edit.delete) {
-                        this.loadModList(this.openedVersion._id)
-                    }
-                })
+            try {
+                await deleteMod(this.openedMod)
+                this.$Message.success('删除成功')
+                this.edit.delete = false
+                this.openedMod = null
+            } catch (err) {
+                console.dir(err)
+                this.$Message.error(err.message || '删除失败')
+            }
+            this.loading = false
+            if (!this.edit.delete) {
+                this.loadModList(this.openedVersion._id)
+            }
         },
         download(dir, file) {
             const $form = this.$refs['hiddenform']

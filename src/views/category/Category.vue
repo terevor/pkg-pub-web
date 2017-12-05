@@ -75,7 +75,14 @@ export default {
                                     margin: '0 5px'
                                 }
                             }),
-                            h('span', {}, formatDateStr(new Date(params.row.time), 'yyyy/MM/dd hh:mm'))
+                            h(
+                                'span',
+                                {},
+                                formatDateStr(
+                                    new Date(params.row.time),
+                                    'yyyy/MM/dd hh:mm'
+                                )
+                            )
                         ])
                     }
                 }
@@ -93,41 +100,35 @@ export default {
                 this.refreshItemList(dir)
             }
         },
-        loadCategoryList() {
+        async loadCategoryList() {
             this.loading = true
-            fetchCategoryList({
-                type: 'dir'
-            })
-                .then(({ data }) => {
-                    this.categoryList = data.files
-                    this.$nextTick(() => {
-                        this.openOne(this.categoryList[0].file)
-                    })
+            try {
+                const { data } = await fetchCategoryList({
+                    type: 'dir'
                 })
-                .catch(err => {
-                    console.dir(err)
-                    this.$Message.error(err.message || '查询失败，请稍后再试')
+                this.categoryList = data.files
+                this.$nextTick(() => {
+                    this.openOne(this.categoryList[0].file)
                 })
-                .finally(() => {
-                    this.loading = false
-                })
+            } catch (err) {
+                console.dir(err)
+                this.$Message.error(err.message || '查询失败，请稍后再试')
+            }
+            this.loading = false
         },
-        refreshItemList(dir) {
+        async refreshItemList(dir) {
             this.loading = true
-            fetchCategoryList({
-                type: 'file',
-                dir
-            })
-                .then(({ data }) => {
-                    this.itemList = data.files
+            try {
+                const { data } = await fetchCategoryList({
+                    type: 'file',
+                    dir
                 })
-                .catch(err => {
-                    console.dir(err)
-                    this.$Message.error(err.message || '查询失败，请稍后再试')
-                })
-                .finally(() => {
-                    this.loading = false
-                })
+                this.itemList = data.files
+            } catch (err) {
+                console.dir(err)
+                this.$Message.error(err.message || '查询失败，请稍后再试')
+            }
+            this.loading = false
         },
         download(file) {
             const $form = this.$refs['hiddenform']

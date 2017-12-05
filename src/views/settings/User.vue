@@ -78,24 +78,21 @@ export default {
         this.handleSearch()
     },
     methods: {
-        handleSearch() {
+        async handleSearch() {
             this.loading = true
-            fetchUserList({
-                ...this.query,
-                page: this.page.current,
-                limit: this.page.size
-            })
-                .then(({ data }) => {
-                    this.userList = data.list
-                    this.page.total = data.total
+            try {
+                const res = await fetchUserList({
+                    ...this.query,
+                    page: this.page.current,
+                    limit: this.page.size
                 })
-                .catch(err => {
-                    console.dir(err)
-                    this.$Message.error(err.message || '查询失败，请稍后再试')
-                })
-                .finally(() => {
-                    this.loading = false
-                })
+                this.userList = res.data.list
+                this.page.total = res.data.total
+            } catch (err) {
+                console.dir(err)
+                this.$Message.error(err.message || '查询失败，请稍后再试')
+            }
+            this.loading = false
         }
     }
 }

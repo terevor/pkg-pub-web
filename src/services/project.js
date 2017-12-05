@@ -1,9 +1,9 @@
 import { httpClient } from '@/plugins/axios'
 
 const API = {
-    project: '/api/project',
-    version: '/api/version',
-    mod: '/api/mod'
+    project: '/project',
+    version: '/version',
+    mod: '/mod'
 }
 
 export const fetchProjectList = data =>

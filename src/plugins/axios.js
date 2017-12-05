@@ -1,13 +1,11 @@
-import Promise from 'bluebird'
+// import Promise from 'bluebird'
 import axios from 'axios'
 import store from '@/store'
-import {
-    USER_SIGNOUT
-} from '@/store/modules/user'
+import { USER_SIGNOUT } from '@/store/modules/user'
 import router from '@/router'
 
 const instance = axios.create({
-    // baseURL: process.env.API_HOST,
+    baseURL: process.env.API_HOST,
     timeout: 30000
 })
 
@@ -16,20 +14,26 @@ instance.interceptors.request.use(
         config.headers['x-access-token'] = store.state.user.token
         return config
     },
-    error => Promise.reject(error))
+    error => Promise.reject(error)
+)
 
 instance.interceptors.response.use(
     response => response,
     error => {
         if (error.response) {
-            switch (error.response.status) {
+            const { status, data } = error.response
+            switch (status) {
                 case 401:
                     // 401 清除token信息并跳转到登录页面
                     store.dispatch(USER_SIGNOUT)
                     router.replace({
                         path: '/login',
                         query: {
-                            from: router.currentRoute.fullPath.startsWith('/login') ? undefined : router.currentRoute.fullPath
+                            from: router.currentRoute.fullPath.startsWith(
+                                '/login'
+                            )
+                                ? undefined
+                                : router.currentRoute.fullPath
                         }
                     })
                     break
@@ -40,9 +44,7 @@ instance.interceptors.response.use(
                 case 504:
                     throw new Error('访问超时，请稍后再试！')
             }
-            if (error.response.data && error.response.data.error) {
-                error.message = error.response.data.error
-            }
+            error.message = (data && data.error) || error.message
         }
         return Promise.reject(error)
     }
@@ -57,7 +59,7 @@ instance.interceptors.response.use(
  *  params: object // params in req.query
  *  responseType: string // default is 'json', or 'blob' for file downloading.
  * }
- * return Promise
+ * return instance
  **/
 export const httpClient = function({
     method = 'get',
@@ -66,24 +68,12 @@ export const httpClient = function({
     params,
     responseType = 'json'
 }) {
-    return new Promise(function(resolve, reject) {
-        instance({
-            method,
-            url,
-            data,
-            params
-        })
-            .then(
-                res => {
-                    resolve(res)
-                },
-                err => {
-                    reject(err)
-                }
-            )
-            .catch(err => {
-                reject(err)
-            })
+    return instance({
+        method,
+        url,
+        data,
+        params,
+        responseType
     })
 }
 

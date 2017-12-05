@@ -98,8 +98,8 @@ export default {
             mode: 'login',
             loading: false,
             form: {
-                email: 'xx@xx.xx',
-                password: '11111111_'
+                email: '',
+                password: ''
             },
             regForm: {
                 name: '',
@@ -129,9 +129,7 @@ export default {
                         trigger: 'blur'
                     }
                 ],
-                name: [
-                    { required: true, message: '姓名不能为空', trigger: 'blur' }
-                ],
+                name: [{ required: true, message: '姓名不能为空', trigger: 'blur' }],
                 email: [
                     {
                         required: true,
@@ -147,6 +145,14 @@ export default {
             }
         }
     },
+    mounted() {
+        if (process.env.NODE_ENV === 'development') {
+            this.form = {
+                email: 'xx@xx.xx',
+                password: '11111111_'
+            }
+        }
+    },
     methods: {
         ...mapActions([USER_SIGNIN, INIT_SIDEBAR_MENUS]),
         handleSubmit() {
@@ -154,7 +160,7 @@ export default {
             else this.handleRegister()
         },
         handleLogin() {
-            this.$refs.loginForm.validate(valid => {
+            this.$refs.loginForm.validate(async valid => {
                 if (valid) {
                     const list = [
                         {
@@ -191,29 +197,26 @@ export default {
                         password: md5(this.form.password)
                     }
                     this.loading = true
-                    submitLogin(p)
-                        .then(({ data }) => {
-                            if (data) {
-                                this.USER_SIGNIN(data)
-                                this.$router.push({
-                                    name: 'home'
-                                })
-                            } else {
-                                this.$Message.error('请输入正确的账号')
-                            }
-                        })
-                        .catch(err => {
-                            console.dir(err)
-                            this.$Message.error(err.message || '登录失败')
-                        })
-                        .finally(() => {
-                            this.loading = false
-                        })
+                    try {
+                        const { data } = await submitLogin(p)
+                        if (data) {
+                            this.USER_SIGNIN(data)
+                            this.$router.push({
+                                name: 'home'
+                            })
+                        } else {
+                            this.$Message.error('请输入正确的账号')
+                        }
+                    } catch (err) {
+                        console.dir(err)
+                        this.$Message.error(err.message || '登录失败')
+                    }
+                    this.loading = false
                 }
             })
         },
         handleRegister() {
-            this.$refs.regForm.validate(valid => {
+            this.$refs.regForm.validate(async valid => {
                 if (valid) {
                     const p = {
                         name: this.regForm.name,
@@ -221,26 +224,23 @@ export default {
                         password: md5(this.regForm.password)
                     }
                     this.loading = true
-                    submitRegister(p)
-                        .then(({ data }) => {
-                            if (data) {
-                                this.$refs.regForm.resetFields()
-                                this.$Message.success({
-                                    content: '注册成功',
-                                    onClose: () => {
-                                        this.form.email = data.email
-                                        this.mode = 'login'
-                                    }
-                                })
-                            }
-                        })
-                        .catch(err => {
-                            console.dir(err)
-                            this.$Message.error(err.message || '注册失败')
-                        })
-                        .finally(() => {
-                            this.loading = false
-                        })
+                    try {
+                        const { data } = await submitRegister(p)
+                        if (data) {
+                            this.$refs.regForm.resetFields()
+                            this.$Message.success({
+                                content: '注册成功',
+                                onClose: () => {
+                                    this.form.email = data.email
+                                    this.mode = 'login'
+                                }
+                            })
+                        }
+                    } catch (err) {
+                        console.dir(err)
+                        this.$Message.error(err.message || '注册失败')
+                    }
+                    this.loading = false
                 }
             })
         }

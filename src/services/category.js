@@ -1,8 +1,8 @@
 import { httpClient } from '@/plugins/axios'
 
 const API = {
-    category: '/api/pkg/list',
-    categoryTree: '/api/pkg/list/all'
+    category: '/pkg/list',
+    categoryTree: '/pkg/list/all'
 }
 
 export const fetchCategoryList = data =>
