@@ -170,4 +170,8 @@ export default {
         z-index: 10;
     }
 }
+
+.taglist-moving-animation-move {
+    transition: transform 0.3s;
+}
 </style>

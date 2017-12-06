@@ -18,7 +18,7 @@
                         <FormItem prop="password">
                             <Input type="password" v-model="form.password" placeholder="请输入密码">
                             <span slot="prepend">
-                                <Icon :size="14" type="locked"></Icon>
+                                <Icon :size="16" type="locked"></Icon>
                             </span>
                             </Input>
                         </FormItem>
@@ -26,8 +26,9 @@
                             <Button @click="handleLogin" type="primary" long :loading="loading">登录</Button>
                         </FormItem>
                     </Form>
-                    <p class="login-tip">还没有账号？去
-                        <a @click.prevent="mode = 'reg'">注册</a>
+                    <p class="login-tip">
+                        <a @click.prevent="changeMode('reset')">忘记密码</a> | 还没有账号？去
+                        <a @click.prevent="changeMode('reg')">注册</a>
                     </p>
                 </div>
             </Card>
@@ -57,14 +58,14 @@
                         <FormItem prop="password">
                             <Input type="password" v-model="regForm.password" placeholder="请输入密码">
                             <span slot="prepend">
-                                <Icon :size="14" type="locked"></Icon>
+                                <Icon :size="16" type="locked"></Icon>
                             </span>
                             </Input>
                         </FormItem>
                         <FormItem prop="password2">
                             <Input type="password" v-model="regForm.password2" placeholder="再次确认密码">
                             <span slot="prepend">
-                                <Icon :size="14" type="locked"></Icon>
+                                <Icon :size="16" type="locked"></Icon>
                             </span>
                             </Input>
                         </FormItem>
@@ -73,7 +74,57 @@
                         </FormItem>
                     </Form>
                     <p class="login-tip">已有账号，去
-                        <a @click.prevent="mode = 'login'">登录</a>
+                        <a @click.prevent="changeMode('login')">登录</a>
+                    </p>
+                </div>
+            </Card>
+        </div>
+        <div class="login-con" v-show="mode === 'reset'">
+            <Card :bordered="false">
+                <p slot="title">
+                    <Icon type="log-in"></Icon>
+                    密码重置
+                </p>
+                <div class="form-con">
+                    <Form ref="resetForm" :model="resetForm" :rules="rules">
+                        <FormItem ref="resetEmail" prop="email">
+                            <Input v-model="resetForm.email" placeholder="请输入email账号">
+                            <span slot="prepend">
+                                <Icon :size="16" type="email"></Icon>
+                            </span>
+                            </Input>
+                        </FormItem>
+                        <FormItem prop="verify">
+                            <Row>
+                                <Col span="15">
+                                <Input v-model="resetForm.verify" placeholder="请输入邮件验证码">
+                                </Input>
+                                </Col>
+                                <Col span="8" offset="1">
+                                <Button @click="handleMail" type="primary" long :disabled="timeLeft > 0" :loading="loading">{{timeLabel}}</Button>
+                                </Col>
+                            </Row>
+                        </FormItem>
+                        <FormItem prop="password">
+                            <Input type="password" v-model="resetForm.password" placeholder="请输入新密码">
+                            <span slot="prepend">
+                                <Icon :size="16" type="locked"></Icon>
+                            </span>
+                            </Input>
+                        </FormItem>
+                        <FormItem prop="password3">
+                            <Input type="password" v-model="resetForm.password3" placeholder="再次确认新密码">
+                            <span slot="prepend">
+                                <Icon :size="16" type="locked"></Icon>
+                            </span>
+                            </Input>
+                        </FormItem>
+                        <FormItem>
+                            <Button @click="handleReset" type="primary" long :loading="loading">提交</Button>
+                        </FormItem>
+                    </Form>
+                    <p class="login-tip">返回
+                        <a @click.prevent="changeMode('login')">登录</a>
                     </p>
                 </div>
             </Card>
@@ -87,7 +138,12 @@ import waves from '@/directives/waves'
 import { mapActions } from 'vuex'
 import { USER_SIGNIN } from '@/store/modules/user'
 import { INIT_SIDEBAR_MENUS } from '@/store/modules/layout'
-import { submitLogin, submitRegister } from '@/services/auth'
+import {
+    submitLogin,
+    submitRegister,
+    sendVerifyCode,
+    submitReset
+} from '@/services/auth'
 import md5 from 'blueimp-md5'
 
 Vue.directive('waves', waves)
@@ -107,6 +163,13 @@ export default {
                 password: '',
                 password2: ''
             },
+            resetForm: {
+                email: '',
+                verify: '',
+                password: '',
+                password3: ''
+            },
+            timeLeft: 0,
             rules: {
                 password: [
                     { required: true, message: '密码不能为空', trigger: 'blur' },
@@ -129,6 +192,19 @@ export default {
                         trigger: 'blur'
                     }
                 ],
+                password3: [
+                    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+                    {
+                        validator: (rule, value, callback) => {
+                            if (value !== this.resetForm.password) {
+                                callback(new Error('两次输入的密码不一致'))
+                            } else {
+                                callback()
+                            }
+                        },
+                        trigger: 'blur'
+                    }
+                ],
                 name: [{ required: true, message: '姓名不能为空', trigger: 'blur' }],
                 email: [
                     {
@@ -139,6 +215,14 @@ export default {
                     {
                         type: 'email',
                         message: 'email格式不对',
+                        trigger: 'blur'
+                    }
+                ],
+                verify: [
+                    { required: true, message: '验证码不能为空', trigger: 'change' },
+                    {
+                        pattern: /\d{6}/,
+                        message: '验证码为6位数字',
                         trigger: 'blur'
                     }
                 ]
@@ -152,12 +236,40 @@ export default {
                 password: '11111111_'
             }
         }
+        let t = sessionStorage.getItem('vcs_mail_timer')
+        if (t) {
+            t = Math.ceil((Number(t) + 300000 - +new Date()) / 1000)
+            if (t > 0) {
+                this.timeLeft = t
+                this.timer()
+            } else {
+                sessionStorage.removeItem('vcs_mail_timer')
+            }
+        }
+    },
+    computed: {
+        timeLabel() {
+            if (this.timeLeft <= 0) {
+                return '获取验证码'
+            }
+            const m = Math.ceil(this.timeLeft / 60)
+            return m > 0 ? `${m}分钟` : `${this.timeLeft}秒`
+        }
     },
     methods: {
         ...mapActions([USER_SIGNIN, INIT_SIDEBAR_MENUS]),
+        changeMode(mode) {
+            this.mode = mode
+            this.$refs[`${mode}Form`].resetFields()
+        },
         handleSubmit() {
-            if (this.mode === 'login') this.handleLogin()
-            else this.handleRegister()
+            if (this.mode === 'login') {
+                this.handleLogin()
+            } else if (this.mode === 'reg') {
+                this.handleRegister()
+            } else {
+                this.handleReset()
+            }
         },
         handleLogin() {
             this.$refs.loginForm.validate(async valid => {
@@ -182,12 +294,12 @@ export default {
                                     name: 'user',
                                     title: '用户',
                                     icon: 'person'
-                                },
-                                {
-                                    name: 'group',
-                                    title: '项目组',
-                                    icon: 'gear-a'
                                 }
+                                // {
+                                //     name: 'group',
+                                //     title: '项目组',
+                                //     icon: 'gear-a'
+                                // }
                             ]
                         }
                     ]
@@ -228,17 +340,64 @@ export default {
                         const { data } = await submitRegister(p)
                         if (data) {
                             this.$refs.regForm.resetFields()
-                            this.$Message.success({
-                                content: '注册成功',
-                                onClose: () => {
-                                    this.form.email = data.email
-                                    this.mode = 'login'
-                                }
-                            })
+                            this.$Message.success('注册成功')
+                            this.form.email = data.email
+                            this.changeMode('login')
                         }
                     } catch (err) {
                         console.dir(err)
                         this.$Message.error(err.message || '注册失败')
+                    }
+                    this.loading = false
+                }
+            })
+        },
+        timer() {
+            this.timeLeft--
+            if (this.timeLeft > 0) {
+                setTimeout(() => {
+                    this.timer()
+                }, 1000)
+            }
+        },
+        handleMail() {
+            this.$refs.resetForm.validateField('email', async invalid => {
+                if (invalid) return
+                this.loading = true
+                try {
+                    await sendVerifyCode({
+                        email: this.resetForm.email
+                    })
+                    this.$Message.success('验证码已发送，5分钟内有效')
+                    sessionStorage.setItem('vcs_mail_timer', +new Date())
+                    this.timeLeft = 5 * 60 * 1000 - 1
+                    this.timer()
+                } catch (err) {
+                    console.dir(err)
+                    this.$Message.error(err.message || '请求发送验证码失败')
+                }
+                this.loading = false
+            })
+        },
+        handleReset() {
+            this.$refs.resetForm.validate(async valid => {
+                if (valid) {
+                    const p = {
+                        verifyCode: this.resetForm.verify,
+                        email: this.resetForm.email,
+                        password: md5(this.resetForm.password)
+                    }
+                    this.loading = true
+                    try {
+                        const { data } = await submitReset(p)
+                        if (data) {
+                            this.$refs.resetForm.resetFields()
+                            this.$Message.success('重置密码成功')
+                            this.changeMode('login')
+                        }
+                    } catch (err) {
+                        console.dir(err)
+                        this.$Message.error(err.message || '重置密码失败')
                     }
                     this.loading = false
                 }

@@ -20,10 +20,10 @@
         <transition name="slide-fade" mode="out-in">
             <div class="panel-center version-list" v-show="!edit.project">
                 <div class="wrapper">
-                    <Tooltip content="添加一个新版本" placement="bottom-start">
+                    <Tooltip content="添加一个新里程碑" placement="bottom-start">
                         <Button type="primary" shape="circle" icon="plus" @click="addVersion"></Button>
                     </Tooltip>
-                    <span class="panel-title">版本</span>
+                    <span class="panel-title">里程碑</span>
                 </div>
                 <div class="wrapper timeline-container">
                     <div class="timeline-col">
@@ -43,15 +43,15 @@
                     </div>
                     <div class="detail-col" v-show="versionList.length > 0">
                         <div class="detail-title">
-                            <span class="detail-title-text">{{openedVersion.name}} 版本说明</span>
+                            <span class="detail-title-text">{{openedVersion.name}} 里程碑说明</span>
                             <Tooltip content="打开模块列表" placement="bottom-start">
                                 <Button type="primary" shape="circle" size="small" icon="arrow-return-right" @click="showModList"></Button>
                             </Tooltip>
-                            <Tooltip content="编辑版本信息" placement="bottom-start">
+                            <Tooltip content="编辑里程碑信息" placement="bottom-start">
                                 <Button type="primary" shape="circle" size="small" icon="edit" @click="editVersion(openedVersion)"></Button>
                             </Tooltip>
                         </div>
-                        <Input v-model="openedVersion.desc" type="textarea" :autosize="{ minRows: 3 }" readonly></Input>
+                        <Input v-model="openedVersion.desc" type="textarea" :autosize="{ minRows: 10 }" readonly></Input>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                         <Input v-model="projectForm.name" placeholder="请输入项目名称"></Input>
                     </FormItem>
                     <FormItem label="项目简介" prop="desc">
-                        <Input v-model="projectForm.desc" type="textarea" :autosize="{ minRows: 3, maxRows: 15 }" placeholder="请输入项目简介"></Input>
+                        <Input v-model="projectForm.desc" type="textarea" :autosize="{ minRows: 10, maxRows: 15 }" placeholder="请输入项目简介"></Input>
                     </FormItem>
                     <FormItem>
                         <Button type="primary" @click="saveProject" :loading="loading">提交</Button>
@@ -76,7 +76,7 @@
         <transition name="slide-up-fade" mode="out-in">
             <div class="panel-right" v-show="edit.modlist">
                 <div class="wrapper" style="margin: 5px 20px;">
-                    <Tooltip content="返回版本说明" placement="bottom-start">
+                    <Tooltip content="返回里程碑说明" placement="bottom-start">
                         <Button type="default" shape="circle" icon="arrow-return-left" @click="edit.modlist = false" style="margin-right: 10px;"></Button>
                     </Tooltip>
                     <Tooltip content="添加一个新模块" placement="bottom-start">
@@ -99,7 +99,7 @@
                         <Cascader :data="fileList" v-model="modForm.url"></Cascader>
                     </FormItem>
                     <FormItem label="功能说明" prop="desc">
-                        <Input v-model="modForm.desc" type="textarea" :autosize="{ minRows: 3, maxRows: 15 }" placeholder="请输入功能说明"></Input>
+                        <Input v-model="modForm.desc" type="textarea" :autosize="{ minRows: 10, maxRows: 15 }" placeholder="请输入功能说明"></Input>
                     </FormItem>
                     <FormItem>
                         <Button type="primary" @click="saveMod" :loading="loading">提交</Button>
@@ -110,12 +110,12 @@
         </transition>
         <transition name="slide-up-fade" mode="out-in">
             <div class="panel-right form" v-show="edit.version">
-                <Form ref="verForm" :model="versionForm" :rules="rules" :label-width="80">
-                    <FormItem label="版本号" prop="name">
-                        <Input v-model="versionForm.name" placeholder="请输入版本号"></Input>
+                <Form ref="verForm" :model="versionForm" :rules="rules" :label-width="120">
+                    <FormItem label="里程碑名称" prop="name">
+                        <Input v-model="versionForm.name" placeholder="请输入里程碑名称"></Input>
                     </FormItem>
-                    <FormItem label="版本说明" prop="desc">
-                        <Input v-model="versionForm.desc" type="textarea" :autosize="{ minRows: 3, maxRows: 15 }" placeholder="请输入版本说明"></Input>
+                    <FormItem label="里程碑说明" prop="desc">
+                        <Input v-model="versionForm.desc" type="textarea" :autosize="{ minRows: 10, maxRows: 15 }" placeholder="请输入里程碑说明"></Input>
                     </FormItem>
                     <FormItem>
                         <Button type="primary" @click="saveVersion" :loading="loading">提交</Button>
@@ -309,15 +309,15 @@ export default {
             },
             rules: {
                 name: [{ required: true, message: '不能为空', trigger: 'blur' }],
-                desc: [{ required: true, message: '不能为空', trigger: 'blur' }],
-                url: [
-                    {
-                        type: 'array',
-                        required: true,
-                        message: '不能为空',
-                        trigger: 'change'
-                    }
-                ]
+                desc: [{ required: true, message: '不能为空', trigger: 'blur' }]
+                // url: [
+                //     {
+                //         type: 'array',
+                //         required: true,
+                //         message: '不能为空',
+                //         trigger: 'change'
+                //     }
+                // ]
             }
         }
     },
@@ -592,13 +592,13 @@ export default {
             top: 10px;
             bottom: 0;
             left: 10px;
-            width: 180px;
+            width: 240px;
             overflow-y: auto;
             overflow-x: hidden;
             border-right: 1px dashed #d2d3d2;
         }
         .detail-col {
-            margin-left: 190px;
+            margin-left: 250px;
             .detail-title {
                 padding: 10px;
                 border-bottom: 1px dashed #d2d3d2;
