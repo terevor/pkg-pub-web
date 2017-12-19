@@ -158,6 +158,7 @@ export default {
         width: 300px;
         bottom: 0;
         padding: 10px 0;
+        overflow: auto;
         div {
             padding: 10px;
             margin: 0 20px;
