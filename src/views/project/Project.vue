@@ -85,7 +85,7 @@
                     <span class="panel-title">模块</span>
                 </div>
                 <div class="panel-right-content">
-                    <Table ref="modList" :columns="columns" :data="modList" :loading="loading"></Table>
+                    <Table ref="modList" :columns="columns" :data="modList" :loading="loading" :height="height"></Table>
                 </div>
             </div>
         </transition>
@@ -161,7 +161,8 @@ import {
 import modDetail from './ModDetail'
 import { fetchCategoryTree } from '@/services/category'
 import { formatDateStr } from '@/filters'
-
+import { debounce } from '@/services/util'
+let autoResize
 export default {
     name: 'project',
     components: { modDetail },
@@ -318,7 +319,8 @@ export default {
                 //         trigger: 'change'
                 //     }
                 // ]
-            }
+            },
+            height: 200
         }
     },
     computed: {
@@ -329,6 +331,14 @@ export default {
     mounted() {
         this.loadProjectList()
         this.loadFileList()
+        autoResize = debounce(() => {
+            this.height = window.innerHeight - 213
+        }, 500)
+        window.addEventListener('resize', autoResize, false)
+        autoResize()
+    },
+    destroyed() {
+        window.removeEventListener('resize', autoResize, false)
     },
     methods: {
         async loadFileList() {
@@ -571,7 +581,7 @@ export default {
     top: 0px;
     right: 0px;
     bottom: 0px;
-    overflow: hidden;
+    // overflow: hidden;
     .wrapper {
         position: relative;
         padding: 10px;
@@ -640,6 +650,7 @@ export default {
         }
     }
     .version-list {
+        min-height: 330px;
         .time {
             font-size: 12px;
             color: #666;

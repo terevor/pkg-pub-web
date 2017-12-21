@@ -12,7 +12,7 @@
         </div>
         <div class="category-content">
             <div class="category-item-list">
-                <Table ref="itemList" :columns="columns" :data="itemList" :no-data-text="'暂无文件'" :loading="loading"></Table>
+                <Table ref="itemList" :columns="columns" :data="itemList" :no-data-text="'暂无文件'" :loading="loading" :height="height"></Table>
             </div>
         </div>
         <form ref="hiddenform" target="_blank">
@@ -26,6 +26,8 @@
 <script>
 import { fetchCategoryList } from '@/services/category'
 import { formatDateStr } from '@/filters'
+import { debounce } from '@/services/util'
+let autoResize
 export default {
     name: 'category',
     data() {
@@ -87,11 +89,20 @@ export default {
                     }
                 }
             ],
-            loading: false
+            loading: false,
+            height: 200
         }
     },
     mounted() {
         this.loadCategoryList()
+        autoResize = debounce(() => {
+            this.height = window.innerHeight - 140
+        }, 500)
+        window.addEventListener('resize', autoResize, false)
+        autoResize()
+    },
+    destroyed() {
+        window.removeEventListener('resize', autoResize, false)
     },
     methods: {
         openOne(dir) {
